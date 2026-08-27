@@ -15,10 +15,69 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- Premium Fintech Opening Animated Intro Overlay -->
+  <div id="intro-overlay" class="intro-overlay">
+    <button class="intro-skip-btn" id="btn-skip-intro">Skip Intro <i class="fa-solid fa-forward-step"></i></button>
+    
+    <div class="intro-stage">
+      <!-- Animated SVG Data Connection Lines -->
+      <svg class="intro-svg-lines" viewBox="0 0 600 360">
+        <path id="line-inv" class="intro-line" d="M 110 90 C 180 140, 230 180, 300 180" />
+        <path id="line-pay" class="intro-line" d="M 490 90 C 420 140, 370 180, 300 180" />
+        <path id="line-match" class="intro-line line-reconciled" d="M 300 180 L 300 270" />
+        <circle class="intro-pulse-dot" r="4"><animateMotion dur="2s" repeatCount="indefinite" path="M 110 90 C 180 140, 230 180, 300 180" /></circle>
+        <circle class="intro-pulse-dot dot-cyan" r="4"><animateMotion dur="2s" repeatCount="indefinite" path="M 490 90 C 420 140, 370 180, 300 180" /></circle>
+      </svg>
+
+      <!-- Floating Transaction Element 1: Invoiced Order -->
+      <div class="intro-floating-card card-invoice" id="intro-card-invoice">
+        <div class="card-chip"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+        <div class="card-info">
+          <span class="card-type">Invoice #INV-2026</span>
+          <span class="card-val">₹50,000.00</span>
+        </div>
+      </div>
+
+      <!-- Center 3D AI Reconciliation Core Token -->
+      <div class="intro-center-token" id="intro-center-token">
+        <div class="radar-ripple"></div>
+        <div class="token-disc">
+          <div class="token-inner">
+            <i class="fa-solid fa-brain token-brain-icon"></i>
+            <span class="token-tag">PAYMATCH AI</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating Transaction Element 2: Gateway Settlement -->
+      <div class="intro-floating-card card-payment" id="intro-card-payment">
+        <div class="card-chip chip-green"><i class="fa-solid fa-building-columns"></i></div>
+        <div class="card-info">
+          <span class="card-type">Gateway Settlement</span>
+          <span class="card-val text-green">₹50,000.00</span>
+        </div>
+      </div>
+
+      <!-- Floating Transaction Element 3: 100% Matched Confirmation -->
+      <div class="intro-matched-banner" id="intro-matched-banner">
+        <i class="fa-solid fa-circle-check"></i>
+        <span>100% RECONCILED • ZERO VARIANCE</span>
+      </div>
+
+      <!-- Final Typography Reveal -->
+      <div class="intro-brand-reveal" id="intro-brand-reveal">
+        <div class="intro-badge"><i class="fa-solid fa-building-columns"></i> Track 4: AI Finance Controller</div>
+        <h1 class="intro-title"><i class="fa-solid fa-credit-card text-blue"></i> PayMatch AI</h1>
+        <p class="intro-tagline">Autonomous Payment Reconciliation • Discrepancy Diagnostics • Smart Recovery</p>
+        <div class="intro-loader-bar"><div class="intro-loader-fill"></div></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification Container -->
   <div id="toast-container" class="toast-container"></div>
 
-  <div class="app-layout">
+  <div class="app-layout" id="app-layout">
     <!-- Sidebar Control Center -->
     <aside class="sidebar">
       <div class="sidebar-header">
@@ -80,6 +139,7 @@
 
       <div class="sidebar-footer">
         <p><b>PayMatch AI — Finance Controller</b><br/>Built for Razorpay Internship Hackathon<br/><i>Zero-setup financial anomaly detection.</i></p>
+        <button id="btn-replay-intro" class="btn btn-outline btn-sm" style="width:100%;margin-top:10px;"><i class="fa-solid fa-play text-blue"></i> Replay Pitch Intro</button>
       </div>
     </aside>
 

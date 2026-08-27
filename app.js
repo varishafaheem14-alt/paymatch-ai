@@ -60,6 +60,37 @@ let currentDataset = [];
 let currentMetrics = {};
 let currentHealth = {};
 let activeDatasetName = "Sample Demo Dataset (45 transactions)";
+let introTimeoutId = null;
+
+// Opening Animation Handler
+function runOpeningAnimation(force = false) {
+  const overlay = document.getElementById("intro-overlay");
+  const brandReveal = document.getElementById("intro-brand-reveal");
+  if (!overlay) return;
+
+  const hasPlayed = sessionStorage.getItem("paymatch_intro_played");
+  if (hasPlayed && !force) {
+    overlay.classList.add("fade-out");
+    return;
+  }
+
+  // Reset states
+  overlay.classList.remove("fade-out");
+  if (brandReveal) brandReveal.classList.remove("active");
+  if (introTimeoutId) clearTimeout(introTimeoutId);
+
+  // Phase 1: Convergence and Brand Reveal at 2.4s
+  setTimeout(() => {
+    if (brandReveal) brandReveal.classList.add("active");
+  }, 2400);
+
+  // Phase 2: Fade Out and reveal Dashboard at 3.9s
+  introTimeoutId = setTimeout(() => {
+    overlay.classList.add("fade-out");
+    sessionStorage.setItem("paymatch_intro_played", "true");
+    setTimeout(renderCharts, 100);
+  }, 3900);
+}
 
 // Toast Notification Function
 function showToast(message, icon = "fa-circle-check") {
@@ -953,11 +984,35 @@ function handleChatQuery(query) {
 
 // Initialize Application
 function initApp() {
+  // Launch Premium Opening Intro
+  runOpeningAnimation();
+
+  // Reconcile Initial Demo Dataset
   const result = reconcileTransactions(DEFAULT_DEMO_DATA);
   currentDataset = result.transactions;
   currentMetrics = result.metrics;
   currentHealth = result.health;
   updateUI();
+
+  // Skip Intro Button
+  const skipBtn = document.getElementById("btn-skip-intro");
+  if (skipBtn) {
+    skipBtn.addEventListener("click", () => {
+      if (introTimeoutId) clearTimeout(introTimeoutId);
+      const overlay = document.getElementById("intro-overlay");
+      if (overlay) overlay.classList.add("fade-out");
+      sessionStorage.setItem("paymatch_intro_played", "true");
+      setTimeout(renderCharts, 100);
+    });
+  }
+
+  // Replay Intro Button in Sidebar
+  const replayBtn = document.getElementById("btn-replay-intro");
+  if (replayBtn) {
+    replayBtn.addEventListener("click", () => {
+      runOpeningAnimation(true);
+    });
+  }
 
   // Handle Initial Hash Navigation (e.g. #transactions, #assistant, #insights, #export)
   const initialHash = window.location.hash.replace("#", "").toLowerCase();

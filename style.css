@@ -1,5 +1,5 @@
 /* ==========================================================================
-   PayMatch AI — Fintech CSS Stylesheet (Vercel & Production)
+   PayMatch AI — Fintech CSS Stylesheet & Pitch Opening Animation
    ========================================================================== */
 
 :root {
@@ -36,6 +36,7 @@
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 25px -5px rgba(10, 25, 47, 0.15);
+  --shadow-3d: 0 15px 35px rgba(0, 102, 255, 0.2), 0 5px 15px rgba(0, 0, 0, 0.08);
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
@@ -54,9 +55,351 @@ body {
   color: var(--text-main);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
-/* Toast Notifications */
+/* ==========================================================================
+   Opening Fintech 3D Animation Overlay
+   ========================================================================== */
+.intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: radial-gradient(circle at center, #FFFFFF 0%, #F1F5F9 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.5s ease;
+  overflow: hidden;
+}
+
+.intro-overlay.fade-out {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.intro-skip-btn {
+  position: absolute;
+  top: 24px;
+  right: 28px;
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  z-index: 10002;
+}
+
+.intro-skip-btn:hover {
+  background: var(--primary);
+  color: #FFFFFF;
+  border-color: var(--primary);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.intro-stage {
+  position: relative;
+  width: 600px;
+  max-width: 92vw;
+  height: 360px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.intro-svg-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.intro-line {
+  fill: none;
+  stroke: #CBD5E1;
+  stroke-width: 2.5;
+  stroke-dasharray: 6 4;
+  animation: dashFlow 1.2s linear infinite;
+}
+
+.intro-line.line-reconciled {
+  stroke: var(--color-green);
+  stroke-width: 3;
+}
+
+@keyframes dashFlow {
+  from { stroke-dashoffset: 20; }
+  to { stroke-dashoffset: 0; }
+}
+
+.intro-pulse-dot {
+  fill: var(--primary);
+  filter: drop-shadow(0 0 4px rgba(0, 102, 255, 0.6));
+}
+
+.intro-pulse-dot.dot-cyan {
+  fill: var(--color-green);
+  filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.6));
+}
+
+/* Center 3D AI Token */
+.intro-center-token {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 4;
+  animation: tokenFloat 3s ease-in-out infinite alternate;
+}
+
+.token-disc {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0A192F 0%, #0066FF 100%);
+  box-shadow: var(--shadow-3d);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transform: perspective(600px) rotateX(15deg) rotateY(-10deg);
+  transition: transform 0.4s ease;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.token-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  text-align: center;
+}
+
+.token-brain-icon {
+  font-size: 28px;
+  color: #60A5FA;
+  filter: drop-shadow(0 0 8px rgba(96, 165, 250, 0.8));
+  animation: pulseGlow 1.5s ease-in-out infinite alternate;
+}
+
+.token-tag {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  margin-top: 4px;
+  color: #E2E8F0;
+}
+
+.radar-ripple {
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 102, 255, 0.4);
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  animation: radarWave 2s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes radarWave {
+  0% { transform: translate(-50%, -50%) scale(0.6); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
+}
+
+@keyframes tokenFloat {
+  0% { transform: translate(-50%, -50%) translateY(0px) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) translateY(-10px) rotate(2deg); }
+}
+
+@keyframes pulseGlow {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  100% { transform: scale(1.1); opacity: 1; filter: drop-shadow(0 0 12px rgba(96, 165, 250, 1)); }
+}
+
+/* Floating Invoice & Settlement Cards */
+.intro-floating-card {
+  position: absolute;
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 3;
+  transition: all 0.3s ease;
+  animation: cardDrift 3s ease-in-out infinite alternate;
+}
+
+.card-invoice {
+  left: 30px;
+  top: 60px;
+  animation-delay: 0.2s;
+}
+
+.card-payment {
+  right: 30px;
+  top: 60px;
+  animation-delay: 0.6s;
+}
+
+@keyframes cardDrift {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-8px); }
+}
+
+.card-chip {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: rgba(0, 102, 255, 0.1);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+}
+
+.card-chip.chip-green {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--color-green);
+}
+
+.card-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-type {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.card-val {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+/* Reconciled Match Confirmation Banner */
+.intro-matched-banner {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: #FFFFFF;
+  padding: 8px 18px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 3;
+  animation: badgePop 2s ease-in-out infinite alternate;
+}
+
+@keyframes badgePop {
+  0% { transform: translateX(-50%) scale(0.98); }
+  100% { transform: translateX(-50%) scale(1.03); }
+}
+
+/* Final Brand Typography Reveal */
+.intro-brand-reveal {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, #FFFFFF 0%, #F1F5F9 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  z-index: 5;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  transform: scale(0.96);
+}
+
+.intro-brand-reveal.active {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1);
+}
+
+.intro-badge {
+  background: rgba(0, 102, 255, 0.1);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  margin-bottom: 12px;
+}
+
+.intro-title {
+  font-size: 38px;
+  font-weight: 800;
+  color: var(--primary-dark);
+  letter-spacing: -1px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.intro-tagline {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted);
+  max-width: 480px;
+  margin-bottom: 24px;
+}
+
+.intro-loader-bar {
+  width: 200px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.intro-loader-fill {
+  height: 100%;
+  width: 0;
+  background: var(--primary);
+  border-radius: 4px;
+  animation: loadFill 1.2s ease-in-out forwards;
+}
+
+@keyframes loadFill {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
+/* ==========================================================================
+   Toast Notifications
+   ========================================================================== */
 .toast-container {
   position: fixed;
   top: 20px;
@@ -93,10 +436,13 @@ body {
   to { opacity: 0; transform: translateY(-8px); }
 }
 
-/* App Layout Grid */
+/* ==========================================================================
+   Dashboard & Application Layout
+   ========================================================================== */
 .app-layout {
   display: flex;
   min-height: 100vh;
+  transition: opacity 0.4s ease;
 }
 
 /* Sidebar Styling */
