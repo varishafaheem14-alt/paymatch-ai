@@ -1,5 +1,5 @@
 /**
- * PayMatch AI — Production Frontend Application Logic
+ * PayMatch AI — Production Frontend Application Logic (Interactive & Bulletproof)
  * Track 4: AI Finance Controller - Razorpay Internship Hackathon
  */
 
@@ -59,6 +59,42 @@ let currentDataset = [];
 let currentMetrics = {};
 let currentHealth = {};
 let activeDatasetName = "Sample Demo Dataset (45 transactions)";
+
+// Toast Notification Function
+function showToast(message, icon = "fa-circle-check") {
+  const container = document.getElementById("toast-container");
+  if (!container) return;
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    if (toast.parentNode) toast.parentNode.removeChild(toast);
+  }, 2600);
+}
+
+// Copy to Clipboard Helper
+function copyTextToClipboard(text, successMessage = "Copied to clipboard!") {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => showToast(successMessage, "fa-copy")).catch(() => fallbackCopy(text, successMessage));
+  } else {
+    fallbackCopy(text, successMessage);
+  }
+}
+
+function fallbackCopy(text, successMessage) {
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  document.body.appendChild(textarea);
+  textarea.select();
+  try {
+    document.execCommand("copy");
+    showToast(successMessage, "fa-copy");
+  } catch (err) {
+    showToast("Press Ctrl+C to copy", "fa-triangle-exclamation");
+  }
+  document.body.removeChild(textarea);
+}
 
 // INR Currency Formatter
 function formatINR(amount) {
@@ -363,6 +399,19 @@ function generateExecutiveReport(metrics, transactions) {
   return md;
 }
 
+// Switch Active Tab Helper
+function switchTab(tabId) {
+  document.querySelectorAll(".tab-btn").forEach(b => {
+    b.classList.toggle("active", b.getAttribute("data-tab") === tabId);
+  });
+  document.querySelectorAll(".tab-pane").forEach(p => {
+    p.classList.toggle("active", p.id === tabId);
+  });
+  if (tabId === "tab-dashboard" || tabId === "tab-insights") {
+    setTimeout(renderCharts, 50);
+  }
+}
+
 // UI Render Functions
 function updateUI() {
   document.getElementById("active-dataset-name").textContent = activeDatasetName;
@@ -470,7 +519,7 @@ function renderCharts() {
   Plotly.newPlot("chart-channel-bar", barData, barLayout, { responsive: true, displayModeBar: false });
 }
 
-// Priority Queue List
+// Priority Queue List with Toggle Accordion & Copy Email
 function renderPriorityQueue() {
   const container = document.getElementById("priority-items-container");
   container.innerHTML = "";
@@ -485,25 +534,45 @@ function renderPriorityQueue() {
     return;
   }
 
-  flagged.forEach(item => {
+  flagged.forEach((item, idx) => {
     const el = document.createElement("div");
-    el.className = "priority-item";
+    el.className = `priority-item ${idx === 0 ? "open" : ""}`;
     const statusBadge = `<span class="badge-${item.reconciliation_status === "MISMATCH" ? "mismatch" : item.reconciliation_status === "DUPLICATE" ? "duplicate" : "missing"}">${item.reconciliation_status}</span>`;
-    
+    const emailBody = generateCustomerEmail(item);
+
     el.innerHTML = `
       <div class="priority-summary">
         <span>[${item.risk_level}] <b>${item.invoice_id}</b> — ${item.customer_name} | Variance: <b>${formatINR(item.difference)}</b></span>
-        ${statusBadge}
+        <div style="display:flex;align-items:center;gap:6px;">
+          ${statusBadge}
+          <i class="fa-solid fa-chevron-down chevron"></i>
+        </div>
       </div>
       <div class="priority-body">
         <p><b>🤖 AI Root Cause:</b> ${item.ai_reason}</p>
-        <p style="margin-top:4px;"><b>💡 Action:</b> ${item.recommended_action}</p>
-        <div style="margin-top:10px;">
-          <small><b>✉️ 1-Click Resolution Outreach Template:</b></small>
-          <pre style="background:#F8FAFC;padding:10px;border-radius:6px;font-size:11px;margin-top:4px;white-space:pre-wrap;border:1px solid #E2E8F0;">${generateCustomerEmail(item)}</pre>
+        <p style="margin-top:4px;"><b>💡 Recommended Next Step:</b> ${item.recommended_action}</p>
+        <div style="margin-top:12px;background:#F8FAFC;padding:12px;border-radius:6px;border:1px solid #E2E8F0;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <small><b>✉️ 1-Click Resolution Outreach Template:</b></small>
+            <button class="btn btn-outline btn-sm btn-copy-item-email" data-email="${encodeURIComponent(emailBody)}"><i class="fa-solid fa-copy"></i> Copy Email</button>
+          </div>
+          <pre style="font-size:11px;white-space:pre-wrap;margin:0;font-family:inherit;line-height:1.4;">${emailBody}</pre>
         </div>
       </div>
     `;
+
+    // Accordion click
+    el.querySelector(".priority-summary").addEventListener("click", () => {
+      el.classList.toggle("open");
+    });
+
+    // Copy Email click
+    el.querySelector(".btn-copy-item-email").addEventListener("click", (e) => {
+      e.stopPropagation();
+      const text = decodeURIComponent(e.currentTarget.getAttribute("data-email"));
+      copyTextToClipboard(text, `Customer email for ${item.customer_name} copied!`);
+    });
+
     container.appendChild(el);
   });
 }
@@ -548,6 +617,11 @@ function renderTable() {
   const tbody = document.getElementById("transactions-table-body");
   tbody.innerHTML = "";
 
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:24px;color:#64748B;"><i class="fa-solid fa-magnifying-glass"></i> No transactions found matching your criteria.</td></tr>`;
+    return;
+  }
+
   filtered.forEach(r => {
     const tr = document.createElement("tr");
     let badgeClass = "badge-matched";
@@ -567,8 +641,20 @@ function renderTable() {
       <td><small>${r.risk_level}</small></td>
       <td>${r.payment_method || "N/A"}</td>
       <td>${r.payment_date || "N/A"}</td>
-      <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.recommended_action}">${r.recommended_action}</td>
+      <td>
+        <button class="btn btn-outline btn-sm btn-inspect-row" data-txnid="${r.transaction_id}" title="Inspect & Generate Email">
+          <i class="fa-solid fa-eye text-blue"></i> Inspect
+        </button>
+      </td>
     `;
+
+    tr.querySelector(".btn-inspect-row").addEventListener("click", (e) => {
+      const txnId = e.currentTarget.getAttribute("data-txnid");
+      document.getElementById("inspector-txn-select").value = txnId;
+      inspectTransaction(txnId);
+      document.getElementById("inspector-details-box").scrollIntoView({ behavior: "smooth" });
+    });
+
     tbody.appendChild(tr);
   });
 }
@@ -598,17 +684,29 @@ function inspectTransaction(txnId) {
     return;
   }
 
+  const emailText = generateCustomerEmail(item);
+
   container.innerHTML = `
-    <h4 style="margin-bottom:8px;">🔍 Discrepancy Breakdown for <code>${item.transaction_id}</code></h4>
-    <p><b>Customer:</b> ${item.customer_name} (Invoice: <code>${item.invoice_id}</code>) | <b>Payment Channel:</b> ${item.payment_method} | <b>Status:</b> ${item.reconciliation_status}</p>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:8px;">
+      <h4>🔍 Discrepancy Breakdown for <code>${item.transaction_id}</code></h4>
+      <span class="badge-${item.reconciliation_status === 'MISMATCH' ? 'mismatch' : item.reconciliation_status === 'DUPLICATE' ? 'duplicate' : item.reconciliation_status === 'MISSING PAYMENT' ? 'missing' : 'matched'}">${item.reconciliation_status}</span>
+    </div>
+    <p><b>Customer:</b> ${item.customer_name} (Invoice: <code>${item.invoice_id}</code>) | <b>Payment Channel:</b> ${item.payment_method} | <b>Date:</b> ${item.payment_date}</p>
     <p><b>Invoiced:</b> ${formatINR(item.invoice_amount)} | <b>Paid:</b> ${formatINR(item.paid_amount)} | <b>Variance:</b> <span style="color:#EF4444;font-weight:700;">${formatINR(item.difference)}</span></p>
     <p style="margin-top:8px;"><b>🤖 Root Cause Analysis:</b> ${item.ai_reason}</p>
     <p style="margin-top:4px;"><b>💡 Controller Recommended Action:</b> ${item.recommended_action}</p>
-    <div style="margin-top:12px;">
-      <b>✉️ Generated Merchant Recovery / Confirmation Email:</b>
-      <pre style="background:#FFFFFF;padding:12px;border-radius:6px;border:1px solid #E2E8F0;font-size:12px;margin-top:6px;white-space:pre-wrap;">${generateCustomerEmail(item)}</pre>
+    <div style="margin-top:14px;background:#FFFFFF;padding:14px;border-radius:8px;border:1px solid #E2E8F0;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <b>✉️ Generated Merchant Recovery / Confirmation Email:</b>
+        <button id="btn-copy-inspector-email" class="btn btn-primary btn-sm"><i class="fa-solid fa-copy"></i> Copy Email Template</button>
+      </div>
+      <pre style="background:#F8FAFC;padding:12px;border-radius:6px;border:1px solid #E2E8F0;font-size:12px;margin:0;white-space:pre-wrap;font-family:inherit;line-height:1.4;">${emailText}</pre>
     </div>
   `;
+
+  document.getElementById("btn-copy-inspector-email").addEventListener("click", () => {
+    copyTextToClipboard(emailText, `Email for ${item.customer_name} (${item.invoice_id}) copied!`);
+  });
 }
 
 // Render Analytics Tab
@@ -725,6 +823,84 @@ function parseCSV(text) {
   return results;
 }
 
+// Dual File Reconciliation Merger
+function mergeAndReconcileDualFiles(invoicesText, paymentsText) {
+  const invRows = parseCSV(invoicesText);
+  const payRows = parseCSV(paymentsText);
+
+  if (invRows.length === 0 && payRows.length === 0) {
+    showToast("Both files are empty or invalid", "fa-triangle-exclamation");
+    return;
+  }
+
+  const payMap = {};
+  payRows.forEach(p => {
+    const invId = (p.invoice_id || "").trim();
+    if (!payMap[invId]) payMap[invId] = [];
+    payMap[invId].push(p);
+  });
+
+  const merged = [];
+  const processedPayInvs = new Set();
+
+  invRows.forEach(inv => {
+    const invId = (inv.invoice_id || "").trim();
+    const matches = payMap[invId];
+    if (matches && matches.length > 0) {
+      matches.forEach(p => {
+        merged.push({
+          transaction_id: p.transaction_id || `PAY-${invId}`,
+          invoice_id: invId,
+          customer_name: inv.customer_name || p.customer_name || "Customer",
+          invoice_amount: inv.invoice_amount || 0,
+          paid_amount: p.paid_amount || p.invoice_amount || 0,
+          payment_date: p.payment_date || inv.payment_date || new Date().toISOString().slice(0,10),
+          payment_method: p.payment_method || "Gateway Settlement",
+          status: p.status || "SUCCESS"
+        });
+      });
+      processedPayInvs.add(invId);
+    } else {
+      // Unpaid invoice
+      merged.push({
+        transaction_id: "N/A",
+        invoice_id: invId,
+        customer_name: inv.customer_name || "Customer",
+        invoice_amount: inv.invoice_amount || 0,
+        paid_amount: 0,
+        payment_date: inv.payment_date || new Date().toISOString().slice(0,10),
+        payment_method: "None",
+        status: "UNPAID"
+      });
+    }
+  });
+
+  // Check orphaned payments
+  payRows.forEach(p => {
+    const invId = (p.invoice_id || "").trim();
+    if (!processedPayInvs.has(invId)) {
+      merged.push({
+        transaction_id: p.transaction_id || `PAY-${invId}`,
+        invoice_id: invId || "INV-UNKNOWN",
+        customer_name: p.customer_name || "Customer",
+        invoice_amount: 0,
+        paid_amount: p.paid_amount || 0,
+        payment_date: p.payment_date || new Date().toISOString().slice(0,10),
+        payment_method: p.payment_method || "Gateway Settlement",
+        status: p.status || "SUCCESS"
+      });
+    }
+  });
+
+  activeDatasetName = `Dual Merged (${invRows.length} Invoices + ${payRows.length} Payments)`;
+  const res = reconcileTransactions(merged);
+  currentDataset = res.transactions;
+  currentMetrics = res.metrics;
+  currentHealth = res.health;
+  updateUI();
+  showToast(`Reconciled ${merged.length} transactions from 2 files!`);
+}
+
 // Chat Assistant Handler
 function handleChatQuery(query) {
   const container = document.getElementById("chat-messages-container");
@@ -774,21 +950,26 @@ function initApp() {
   currentHealth = result.health;
   updateUI();
 
-  // Tab Navigation
+  // Tab Navigation Buttons
   document.querySelectorAll(".tab-btn").forEach(btn => {
     btn.addEventListener("click", () => {
-      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-      document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
-      btn.classList.add("active");
       const targetId = btn.getAttribute("data-tab");
-      document.getElementById(targetId).classList.add("active");
-      if (targetId === "tab-dashboard" || targetId === "tab-insights") {
-        setTimeout(renderCharts, 50);
-      }
+      switchTab(targetId);
     });
   });
 
-  // Source Radio Switching
+  // KPI Card Clicks -> Filter & Switch to Audit Table
+  document.querySelectorAll(".clickable-kpi").forEach(card => {
+    card.addEventListener("click", () => {
+      const filterVal = card.getAttribute("data-filter") || "ALL";
+      document.getElementById("filter-status-select").value = filterVal;
+      switchTab("tab-transactions");
+      renderTable();
+      showToast(`Filtered transactions by: ${filterVal}`);
+    });
+  });
+
+  // Ingestion Source Radio Selector
   document.querySelectorAll(".radio-label").forEach(label => {
     label.addEventListener("click", () => {
       document.querySelectorAll(".radio-label").forEach(l => l.classList.remove("active"));
@@ -806,6 +987,7 @@ function initApp() {
         currentMetrics = res.metrics;
         currentHealth = res.health;
         updateUI();
+        showToast("Loaded 45 demo transactions!");
       }
     });
   });
@@ -818,6 +1000,7 @@ function initApp() {
     currentMetrics = res.metrics;
     currentHealth = res.health;
     updateUI();
+    showToast("Reloaded 45 demo transactions successfully!");
   });
 
   // CSV Single File Upload
@@ -834,6 +1017,7 @@ function initApp() {
         currentMetrics = res.metrics;
         currentHealth = res.health;
         updateUI();
+        showToast(`Uploaded and reconciled ${records.length} transactions!`);
       } else {
         alert("Unable to parse CSV. Please check the expected column headers.");
       }
@@ -841,15 +1025,46 @@ function initApp() {
     reader.readAsText(file);
   });
 
-  // Filter and Search Events
+  // Dual File Merge & Reconcile Button
+  document.getElementById("btn-merge-reconcile").addEventListener("click", () => {
+    const invInput = document.getElementById("inv-file-input");
+    const payInput = document.getElementById("pay-file-input");
+
+    if (!invInput.files[0] || !payInput.files[0]) {
+      showToast("Please select BOTH Invoices CSV and Payments CSV first", "fa-triangle-exclamation");
+      return;
+    }
+
+    const reader1 = new FileReader();
+    reader1.onload = (e1) => {
+      const invoicesText = e1.target.result;
+      const reader2 = new FileReader();
+      reader2.onload = (e2) => {
+        const paymentsText = e2.target.result;
+        mergeAndReconcileDualFiles(invoicesText, paymentsText);
+      };
+      reader2.readAsText(payInput.files[0]);
+    };
+    reader1.readAsText(invInput.files[0]);
+  });
+
+  // Table Filter and Search Events
   document.getElementById("filter-status-select").addEventListener("change", renderTable);
   document.getElementById("filter-channel-select").addEventListener("change", renderTable);
   document.getElementById("search-txns-input").addEventListener("input", renderTable);
+
+  // Clear Search Button
+  document.getElementById("btn-clear-search").addEventListener("click", () => {
+    document.getElementById("search-txns-input").value = "";
+    renderTable();
+  });
+
+  // Inspector Dropdown Change
   document.getElementById("inspector-txn-select").addEventListener("change", (e) => {
     inspectTransaction(e.target.value);
   });
 
-  // Quick Prompt Buttons
+  // Quick Prompt Buttons in AI Assistant
   document.querySelectorAll(".quick-prompt-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       const query = btn.getAttribute("data-query");
@@ -857,7 +1072,7 @@ function initApp() {
     });
   });
 
-  // Chat Input
+  // Send Chat Button
   document.getElementById("btn-send-chat").addEventListener("click", () => {
     const input = document.getElementById("chat-user-input");
     const query = input.value.trim();
@@ -867,6 +1082,7 @@ function initApp() {
     }
   });
 
+  // Enter Key on Chat Input
   document.getElementById("chat-user-input").addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       const query = e.target.value.trim();
@@ -875,6 +1091,18 @@ function initApp() {
         e.target.value = "";
       }
     }
+  });
+
+  // Clear Chat History Button
+  document.getElementById("btn-clear-chat").addEventListener("click", () => {
+    const container = document.getElementById("chat-messages-container");
+    container.innerHTML = `
+      <div class="chat-message assistant">
+        <div class="chat-avatar"><i class="fa-solid fa-robot"></i></div>
+        <div class="chat-bubble">👋 Hello! I am your <b>PayMatch AI Finance Controller</b>. How can I assist you with today's reconciliation audit?</div>
+      </div>
+    `;
+    showToast("Chat history cleared");
   });
 
   // CSV Download Button
@@ -888,6 +1116,7 @@ function initApp() {
     link.href = URL.createObjectURL(blob);
     link.download = `PayMatch_AI_Reconciliation_${new Date().toISOString().slice(0,10)}.csv`;
     link.click();
+    showToast("Reconciliation CSV downloaded!");
   });
 
   // Markdown Download Button
@@ -898,6 +1127,13 @@ function initApp() {
     link.href = URL.createObjectURL(blob);
     link.download = `PayMatch_AI_Executive_Summary_${new Date().toISOString().slice(0,10)}.md`;
     link.click();
+    showToast("Executive Summary Markdown downloaded!");
+  });
+
+  // Copy Markdown Button
+  document.getElementById("btn-copy-md").addEventListener("click", () => {
+    const mdContent = generateExecutiveReport(currentMetrics, currentDataset);
+    copyTextToClipboard(mdContent, "Executive Summary copied to clipboard!");
   });
 }
 

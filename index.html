@@ -15,6 +15,9 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
   <div class="app-layout">
     <!-- Sidebar Control Center -->
     <aside class="sidebar">
@@ -29,7 +32,7 @@
         <div class="source-selector">
           <label class="radio-label active" data-mode="demo">
             <input type="radio" name="source_mode" value="demo" checked />
-            <span><i class="fa-solid fa-bolt text-amber"></i> Demo Mode (Instant 45 Txns)</span>
+            <span><i class="fa-solid fa-bolt text-amber"></i> Demo Mode (45 Txns)</span>
           </label>
           <label class="radio-label" data-mode="single">
             <input type="radio" name="source_mode" value="single" />
@@ -54,11 +57,11 @@
       <!-- Dual File Upload Box -->
       <div class="sidebar-section upload-box hidden" id="dual-upload-box">
         <h3><i class="fa-solid fa-folder-open"></i> Upload Dual Files</h3>
-        <label class="file-sublabel">1. Invoices CSV</label>
+        <label class="file-sublabel">1. Invoices CSV (invoice_id, amount)</label>
         <input type="file" id="inv-file-input" accept=".csv" class="file-input" />
-        <label class="file-sublabel">2. Gateway Settlements CSV</label>
+        <label class="file-sublabel">2. Gateway Payments CSV (invoice_id, paid_amount)</label>
         <input type="file" id="pay-file-input" accept=".csv" class="file-input" />
-        <button id="btn-merge-reconcile" class="btn btn-primary btn-sm"><i class="fa-solid fa-arrows-split-up-and-left"></i> Reconcile Both Files</button>
+        <button id="btn-merge-reconcile" class="btn btn-primary btn-sm" style="margin-top:6px;"><i class="fa-solid fa-arrows-split-up-and-left"></i> Reconcile Both Files</button>
       </div>
 
       <!-- Reload Demo Button -->
@@ -125,46 +128,46 @@
 
         <!-- Primary KPI Metrics Grid -->
         <div class="kpi-grid">
-          <div class="kpi-card">
+          <div class="kpi-card clickable-kpi" data-filter="ALL" title="Click to view all transactions in Audit Table">
             <div class="kpi-label">Total Volume</div>
             <div class="kpi-value" id="kpi-total-txns">45</div>
-            <div class="kpi-sub text-muted">Transactions Ingested</div>
+            <div class="kpi-sub text-muted">Transactions Ingested <i class="fa-solid fa-arrow-right-long"></i></div>
           </div>
-          <div class="kpi-card">
+          <div class="kpi-card clickable-kpi" data-filter="ALL" title="Click to view all transactions in Audit Table">
             <div class="kpi-label">Invoiced Value</div>
             <div class="kpi-value text-blue" id="kpi-total-invoiced">₹12,47,900.00</div>
-            <div class="kpi-sub text-blue">Total Billed Revenue</div>
+            <div class="kpi-sub text-blue">Total Billed Revenue <i class="fa-solid fa-arrow-right-long"></i></div>
           </div>
-          <div class="kpi-card">
+          <div class="kpi-card clickable-kpi" data-filter="MATCHED" title="Click to view settled matched transactions">
             <div class="kpi-label">Settled Amount</div>
             <div class="kpi-value text-green" id="kpi-total-settled">₹10,57,476.00</div>
-            <div class="kpi-sub text-green">Total Received Funds</div>
+            <div class="kpi-sub text-green">Total Received Funds <i class="fa-solid fa-arrow-right-long"></i></div>
           </div>
-          <div class="kpi-card">
+          <div class="kpi-card clickable-kpi" data-filter="ALL" title="Click to view reconciliation breakdown">
             <div class="kpi-label">Reconciliation Rate</div>
             <div class="kpi-value text-amber" id="kpi-reconciliation-rate">60.0%</div>
-            <div class="kpi-sub text-amber">Matched Cleanly</div>
+            <div class="kpi-sub text-amber">Matched Cleanly <i class="fa-solid fa-arrow-right-long"></i></div>
           </div>
         </div>
 
-        <!-- Secondary Status Breakdown Grid -->
+        <!-- Secondary Status Breakdown Grid (Clickable to Filter) -->
         <div class="kpi-grid status-grid">
-          <div class="kpi-card mini-kpi">
+          <div class="kpi-card mini-kpi clickable-kpi" data-filter="MATCHED" title="Click to filter by Matched">
             <div class="kpi-label">✅ Matched</div>
             <div class="kpi-value text-green" id="kpi-matched-count">27</div>
             <div class="kpi-sub" id="kpi-matched-amt">₹8,90,000.00</div>
           </div>
-          <div class="kpi-card mini-kpi">
+          <div class="kpi-card mini-kpi clickable-kpi" data-filter="MISMATCH" title="Click to filter by Mismatches">
             <div class="kpi-label">⚠️ Mismatches</div>
             <div class="kpi-value text-amber" id="kpi-mismatch-count">9</div>
             <div class="kpi-sub text-amber" id="kpi-mismatch-diff">Diff: ₹13,480.00</div>
           </div>
-          <div class="kpi-card mini-kpi">
+          <div class="kpi-card mini-kpi clickable-kpi" data-filter="MISSING PAYMENT" title="Click to filter by Missing Payments">
             <div class="kpi-label">❌ Missing Payments</div>
             <div class="kpi-value text-red" id="kpi-missing-count">5</div>
             <div class="kpi-sub text-red" id="kpi-missing-amt">Unpaid: ₹1,77,000.00</div>
           </div>
-          <div class="kpi-card mini-kpi">
+          <div class="kpi-card mini-kpi clickable-kpi" data-filter="DUPLICATE" title="Click to filter by Duplicates">
             <div class="kpi-label">🔄 Duplicates</div>
             <div class="kpi-value text-purple" id="kpi-duplicate-count">3</div>
             <div class="kpi-sub text-purple">Double Charges</div>
@@ -214,7 +217,10 @@
             </div>
             <div class="filter-group flex-grow">
               <label><i class="fa-solid fa-magnifying-glass"></i> Search Transactions:</label>
-              <input type="text" id="search-txns-input" placeholder="Search by Txn ID, Invoice ID, or Customer (e.g. Zomato)..." class="text-input" />
+              <div class="search-input-wrapper">
+                <input type="text" id="search-txns-input" placeholder="Search by Txn ID, Invoice ID, or Customer (e.g. Zomato)..." class="text-input" />
+                <button id="btn-clear-search" class="btn-clear-search" title="Clear search"><i class="fa-solid fa-xmark"></i></button>
+              </div>
             </div>
           </div>
 
@@ -236,7 +242,7 @@
                   <th>Risk</th>
                   <th>Method</th>
                   <th>Date</th>
-                  <th>Recommended Action</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody id="transactions-table-body"></tbody>
@@ -262,7 +268,7 @@
         <div class="section-card">
           <div class="section-header">
             <h3><i class="fa-solid fa-robot text-blue"></i> PayMatch AI Finance Assistant</h3>
-            <span class="badge-status-pill">Active Controller</span>
+            <button id="btn-clear-chat" class="btn btn-outline btn-sm"><i class="fa-solid fa-trash-can"></i> Clear History</button>
           </div>
           <p class="section-desc">Ask questions about discrepancies, financial risk, Razorpay fees, duplicate transactions, or draft resolution emails.</p>
 
@@ -337,12 +343,17 @@
             <div class="export-box">
               <h4><i class="fa-solid fa-file-lines text-blue"></i> Executive Summary Markdown Report</h4>
               <p>Formatted audit report with high-level KPI summaries, health ratings, and top priority action items.</p>
-              <button id="btn-download-md" class="btn btn-outline"><i class="fa-solid fa-download"></i> Download Executive Summary Report (.md)</button>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button id="btn-download-md" class="btn btn-outline"><i class="fa-solid fa-download"></i> Download Summary (.md)</button>
+                <button id="btn-copy-md" class="btn btn-outline"><i class="fa-solid fa-copy"></i> Copy Summary</button>
+              </div>
             </div>
           </div>
 
           <hr class="divider" />
-          <h4><i class="fa-solid fa-eye"></i> Live Preview of Executive Report</h4>
+          <div class="section-header">
+            <h4><i class="fa-solid fa-eye"></i> Live Preview of Executive Report</h4>
+          </div>
           <div class="report-preview-box" id="report-preview-content"></div>
         </div>
       </section>

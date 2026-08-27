@@ -56,6 +56,43 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Toast Notifications */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  background: #0F172A;
+  color: #FFFFFF;
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: auto;
+  animation: slideIn 0.25s ease, fadeOut 0.25s ease 2.25s forwards;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; transform: translateY(-8px); }
+}
+
 /* App Layout Grid */
 .app-layout {
   display: flex;
@@ -192,6 +229,27 @@ body {
 .text-input:focus, .select-input:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.btn-clear-search {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 4px;
+}
+
+.btn-clear-search:hover {
+  color: var(--text-main);
 }
 
 .sidebar-footer {
@@ -393,10 +451,14 @@ body {
   transition: all 0.2s ease;
 }
 
-.kpi-card:hover {
-  transform: translateY(-2px);
+.kpi-card.clickable-kpi {
+  cursor: pointer;
+}
+
+.kpi-card.clickable-kpi:hover {
+  transform: translateY(-3px);
   box-shadow: var(--shadow-md);
-  border-color: var(--border-focus);
+  border-color: var(--primary);
 }
 
 .kpi-label {
@@ -489,6 +551,7 @@ body {
   border-radius: var(--radius-sm);
   background: #FAFAFA;
   overflow: hidden;
+  transition: border-color 0.2s ease;
 }
 
 .priority-summary {
@@ -506,11 +569,26 @@ body {
   background: #F1F5F9;
 }
 
+.priority-summary .chevron {
+  transition: transform 0.2s ease;
+  margin-left: 8px;
+  color: var(--text-muted);
+}
+
+.priority-item.open .priority-summary .chevron {
+  transform: rotate(180deg);
+}
+
 .priority-body {
   padding: 14px 16px;
   background: #FFFFFF;
   border-top: 1px solid var(--border);
   font-size: 13px;
+  display: none;
+}
+
+.priority-item.open .priority-body {
+  display: block;
 }
 
 /* Table Styling */
