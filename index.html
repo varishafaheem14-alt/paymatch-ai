@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PayMatch AI — Smart Payment Reconciliation & Finance Controller</title>
+  <!-- Google Fonts & Font Awesome -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <!-- Plotly.js for Fintech Visualizations -->
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+  <!-- Custom Fintech Stylesheet -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar Control Center -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="brand-badge-sidebar"><i class="fa-solid fa-building-columns"></i> Track 4: AI Finance Controller</div>
+        <h2><i class="fa-solid fa-credit-card text-blue"></i> PayMatch AI</h2>
+        <p class="sidebar-tagline">Autonomous Payment Reconciliation</p>
+      </div>
+
+      <div class="sidebar-section">
+        <h3><i class="fa-solid fa-sliders"></i> Ingestion Source</h3>
+        <div class="source-selector">
+          <label class="radio-label active" data-mode="demo">
+            <input type="radio" name="source_mode" value="demo" checked />
+            <span><i class="fa-solid fa-bolt text-amber"></i> Demo Mode (Instant 45 Txns)</span>
+          </label>
+          <label class="radio-label" data-mode="single">
+            <input type="radio" name="source_mode" value="single" />
+            <span><i class="fa-solid fa-file-csv text-blue"></i> Single Transaction CSV</span>
+          </label>
+          <label class="radio-label" data-mode="dual">
+            <input type="radio" name="source_mode" value="dual" />
+            <span><i class="fa-solid fa-folder-tree text-purple"></i> Dual Upload (Invoices + Payments)</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Single File Upload Box -->
+      <div class="sidebar-section upload-box hidden" id="single-upload-box">
+        <h3><i class="fa-solid fa-cloud-arrow-up"></i> Upload CSV</h3>
+        <input type="file" id="csv-file-input" accept=".csv" class="file-input" />
+        <div class="csv-help-box">
+          <small><b>Expected format:</b><br/><code>transaction_id, invoice_id, customer_name, invoice_amount, paid_amount, payment_date, payment_method, status</code></small>
+        </div>
+      </div>
+
+      <!-- Dual File Upload Box -->
+      <div class="sidebar-section upload-box hidden" id="dual-upload-box">
+        <h3><i class="fa-solid fa-folder-open"></i> Upload Dual Files</h3>
+        <label class="file-sublabel">1. Invoices CSV</label>
+        <input type="file" id="inv-file-input" accept=".csv" class="file-input" />
+        <label class="file-sublabel">2. Gateway Settlements CSV</label>
+        <input type="file" id="pay-file-input" accept=".csv" class="file-input" />
+        <button id="btn-merge-reconcile" class="btn btn-primary btn-sm"><i class="fa-solid fa-arrows-split-up-and-left"></i> Reconcile Both Files</button>
+      </div>
+
+      <!-- Reload Demo Button -->
+      <div class="sidebar-section" id="demo-action-box">
+        <button id="btn-reload-demo" class="btn btn-primary"><i class="fa-solid fa-rotate-right"></i> Reload Sample Demo Data</button>
+      </div>
+
+      <!-- AI Settings Box -->
+      <div class="sidebar-section">
+        <h3><i class="fa-solid fa-microchip"></i> AI Engine Settings</h3>
+        <div class="api-key-container">
+          <input type="password" id="gemini-api-key" placeholder="Optional Gemini API Key" class="text-input" />
+          <small class="text-muted"><i class="fa-solid fa-shield-check"></i> Built-in offline rule intelligence active. Never fails without key.</small>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <p><b>PayMatch AI — Finance Controller</b><br/>Built for Razorpay Internship Hackathon<br/><i>Zero-setup financial anomaly detection.</i></p>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Top Branding Header -->
+      <header class="brand-header">
+        <div class="brand-header-content">
+          <div>
+            <div class="brand-title-row">
+              <h1 class="brand-title"><i class="fa-solid fa-wallet"></i> PayMatch AI</h1>
+              <span class="badge-track">Track 4: AI Finance Controller</span>
+            </div>
+            <p class="brand-subtitle">Autonomous Payment Reconciliation • Discrepancy Diagnostics • MDR Fee Detection • Smart Recovery</p>
+          </div>
+          <div class="brand-active-dataset">
+            <span class="dataset-label">Active Dataset:</span>
+            <span class="dataset-value" id="active-dataset-name">Sample Demo Dataset (45 transactions)</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Navigation Tabs -->
+      <nav class="nav-tabs">
+        <button class="tab-btn active" data-tab="tab-dashboard"><i class="fa-solid fa-chart-pie"></i> Executive Dashboard</button>
+        <button class="tab-btn" data-tab="tab-transactions"><i class="fa-solid fa-list-check"></i> Transaction Audit</button>
+        <button class="tab-btn" data-tab="tab-assistant"><i class="fa-solid fa-robot"></i> AI Finance Assistant</button>
+        <button class="tab-btn" data-tab="tab-insights"><i class="fa-solid fa-chart-line"></i> Financial Analytics</button>
+        <button class="tab-btn" data-tab="tab-export"><i class="fa-solid fa-file-export"></i> Export & Reports</button>
+      </nav>
+
+      <!-- TAB 1: EXECUTIVE DASHBOARD -->
+      <section id="tab-dashboard" class="tab-pane active">
+        <!-- Portfolio Health Audit Card -->
+        <div class="health-card" id="health-card">
+          <div class="health-card-left">
+            <span class="health-card-tag">Portfolio Health Audit</span>
+            <h2 id="health-status-title">Moderate Attention Needed</h2>
+            <p id="health-status-desc">Moderate variance detected. Several payments have uncollected balances or gateway fee deductions requiring ledger posting.</p>
+          </div>
+          <div class="health-card-right">
+            <span class="risk-label">Total Amount at Risk</span>
+            <h2 class="risk-amount" id="total-risk-val">₹1,90,480.00</h2>
+          </div>
+        </div>
+
+        <!-- Primary KPI Metrics Grid -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">Total Volume</div>
+            <div class="kpi-value" id="kpi-total-txns">45</div>
+            <div class="kpi-sub text-muted">Transactions Ingested</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Invoiced Value</div>
+            <div class="kpi-value text-blue" id="kpi-total-invoiced">₹12,47,900.00</div>
+            <div class="kpi-sub text-blue">Total Billed Revenue</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Settled Amount</div>
+            <div class="kpi-value text-green" id="kpi-total-settled">₹10,57,476.00</div>
+            <div class="kpi-sub text-green">Total Received Funds</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Reconciliation Rate</div>
+            <div class="kpi-value text-amber" id="kpi-reconciliation-rate">60.0%</div>
+            <div class="kpi-sub text-amber">Matched Cleanly</div>
+          </div>
+        </div>
+
+        <!-- Secondary Status Breakdown Grid -->
+        <div class="kpi-grid status-grid">
+          <div class="kpi-card mini-kpi">
+            <div class="kpi-label">✅ Matched</div>
+            <div class="kpi-value text-green" id="kpi-matched-count">27</div>
+            <div class="kpi-sub" id="kpi-matched-amt">₹8,90,000.00</div>
+          </div>
+          <div class="kpi-card mini-kpi">
+            <div class="kpi-label">⚠️ Mismatches</div>
+            <div class="kpi-value text-amber" id="kpi-mismatch-count">9</div>
+            <div class="kpi-sub text-amber" id="kpi-mismatch-diff">Diff: ₹13,480.00</div>
+          </div>
+          <div class="kpi-card mini-kpi">
+            <div class="kpi-label">❌ Missing Payments</div>
+            <div class="kpi-value text-red" id="kpi-missing-count">5</div>
+            <div class="kpi-sub text-red" id="kpi-missing-amt">Unpaid: ₹1,77,000.00</div>
+          </div>
+          <div class="kpi-card mini-kpi">
+            <div class="kpi-label">🔄 Duplicates</div>
+            <div class="kpi-value text-purple" id="kpi-duplicate-count">3</div>
+            <div class="kpi-sub text-purple">Double Charges</div>
+          </div>
+        </div>
+
+        <!-- Interactive Charts Row -->
+        <div class="charts-row">
+          <div class="chart-container">
+            <div id="chart-status-donut"></div>
+          </div>
+          <div class="chart-container">
+            <div id="chart-channel-bar"></div>
+          </div>
+        </div>
+
+        <!-- Priority Queue Section -->
+        <div class="section-card">
+          <div class="section-header">
+            <h3><i class="fa-solid fa-triangle-exclamation text-red"></i> High-Priority Action Items (Finance Controller Queue)</h3>
+            <span class="badge-priority">Immediate Action Required</span>
+          </div>
+          <div id="priority-items-container" class="priority-list"></div>
+        </div>
+      </section>
+
+      <!-- TAB 2: TRANSACTION AUDIT -->
+      <section id="tab-transactions" class="tab-pane">
+        <div class="section-card">
+          <div class="filter-controls-row">
+            <div class="filter-group">
+              <label><i class="fa-solid fa-filter"></i> Reconciliation Status:</label>
+              <select id="filter-status-select" class="select-input">
+                <option value="ALL">ALL (All Statuses)</option>
+                <option value="MATCHED">MATCHED</option>
+                <option value="MISMATCH">MISMATCH</option>
+                <option value="MISSING PAYMENT">MISSING PAYMENT</option>
+                <option value="DUPLICATE">DUPLICATE</option>
+                <option value="PENDING">PENDING</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label><i class="fa-solid fa-credit-card"></i> Payment Channel:</label>
+              <select id="filter-channel-select" class="select-input">
+                <option value="ALL">ALL Channels</option>
+              </select>
+            </div>
+            <div class="filter-group flex-grow">
+              <label><i class="fa-solid fa-magnifying-glass"></i> Search Transactions:</label>
+              <input type="text" id="search-txns-input" placeholder="Search by Txn ID, Invoice ID, or Customer (e.g. Zomato)..." class="text-input" />
+            </div>
+          </div>
+
+          <div class="table-meta-bar">
+            <span id="table-record-count">Showing 45 of 45 transactions</span>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table" id="transactions-table">
+              <thead>
+                <tr>
+                  <th>Txn ID</th>
+                  <th>Invoice ID</th>
+                  <th>Customer</th>
+                  <th>Invoiced</th>
+                  <th>Paid</th>
+                  <th>Difference</th>
+                  <th>Status</th>
+                  <th>Risk</th>
+                  <th>Method</th>
+                  <th>Date</th>
+                  <th>Recommended Action</th>
+                </tr>
+              </thead>
+              <tbody id="transactions-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Single Transaction Inspector -->
+        <div class="section-card">
+          <div class="section-header">
+            <h3><i class="fa-solid fa-microscope text-blue"></i> Inspect Single Transaction Discrepancy</h3>
+          </div>
+          <div class="inspector-controls">
+            <label>Select Transaction to Inspect:</label>
+            <select id="inspector-txn-select" class="select-input"></select>
+          </div>
+          <div id="inspector-details-box" class="inspector-box"></div>
+        </div>
+      </section>
+
+      <!-- TAB 3: AI FINANCE ASSISTANT -->
+      <section id="tab-assistant" class="tab-pane">
+        <div class="section-card">
+          <div class="section-header">
+            <h3><i class="fa-solid fa-robot text-blue"></i> PayMatch AI Finance Assistant</h3>
+            <span class="badge-status-pill">Active Controller</span>
+          </div>
+          <p class="section-desc">Ask questions about discrepancies, financial risk, Razorpay fees, duplicate transactions, or draft resolution emails.</p>
+
+          <!-- Quick Query Buttons -->
+          <div class="quick-prompts-grid">
+            <button class="btn btn-outline quick-prompt-btn" data-query="What is our biggest financial risk?"><i class="fa-solid fa-triangle-exclamation text-red"></i> What is our biggest risk?</button>
+            <button class="btn btn-outline quick-prompt-btn" data-query="Show me missing payments and unpaid customers"><i class="fa-solid fa-circle-xmark text-red"></i> Missing Payments Audit</button>
+            <button class="btn btn-outline quick-prompt-btn" data-query="How should we handle Razorpay MDR fee deductions?"><i class="fa-solid fa-receipt text-blue"></i> Razorpay MDR Fee Analysis</button>
+            <button class="btn btn-outline quick-prompt-btn" data-query="Explain duplicate transactions and chargeback risks"><i class="fa-solid fa-copy text-purple"></i> Duplicate Charges Audit</button>
+          </div>
+
+          <!-- Chat Conversation Window -->
+          <div class="chat-container" id="chat-messages-container">
+            <div class="chat-message assistant">
+              <div class="chat-avatar"><i class="fa-solid fa-robot"></i></div>
+              <div class="chat-bubble">
+                👋 Hello! I am your <b>PayMatch AI Finance Controller</b>. How can I assist you with today's reconciliation audit?
+              </div>
+            </div>
+          </div>
+
+          <!-- Chat Input -->
+          <div class="chat-input-bar">
+            <input type="text" id="chat-user-input" placeholder="Ask PayMatch AI Finance Assistant..." class="text-input" />
+            <button id="btn-send-chat" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Send</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: FINANCIAL ANALYTICS -->
+      <section id="tab-insights" class="tab-pane">
+        <div class="charts-row">
+          <div class="chart-container">
+            <div id="chart-timeline"></div>
+          </div>
+          <div class="chart-container">
+            <div id="chart-customer-variance"></div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header">
+            <h3><i class="fa-solid fa-table-list"></i> Root Cause Distribution Breakdown</h3>
+          </div>
+          <table class="data-table" id="root-cause-table">
+            <thead>
+              <tr>
+                <th>Reconciliation Status</th>
+                <th>Transaction Count</th>
+                <th>Volume Percentage</th>
+              </tr>
+            </thead>
+            <tbody id="root-cause-table-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- TAB 5: EXPORT & REPORTS -->
+      <section id="tab-export" class="tab-pane">
+        <div class="section-card">
+          <div class="section-header">
+            <h3><i class="fa-solid fa-file-arrow-down text-blue"></i> Export Reconciliation Audit Reports</h3>
+          </div>
+          <p class="section-desc">Download enriched reconciliation files for compliance, ERP import, or executive stakeholder presentation.</p>
+
+          <div class="export-buttons-grid">
+            <div class="export-box">
+              <h4><i class="fa-solid fa-file-csv text-green"></i> Enriched Reconciliation CSV</h4>
+              <p>Contains full transaction dataset enriched with flags, difference calculations, risk tiers, and AI action items.</p>
+              <button id="btn-download-csv" class="btn btn-primary"><i class="fa-solid fa-download"></i> Download Reconciliation CSV Report</button>
+            </div>
+            <div class="export-box">
+              <h4><i class="fa-solid fa-file-lines text-blue"></i> Executive Summary Markdown Report</h4>
+              <p>Formatted audit report with high-level KPI summaries, health ratings, and top priority action items.</p>
+              <button id="btn-download-md" class="btn btn-outline"><i class="fa-solid fa-download"></i> Download Executive Summary Report (.md)</button>
+            </div>
+          </div>
+
+          <hr class="divider" />
+          <h4><i class="fa-solid fa-eye"></i> Live Preview of Executive Report</h4>
+          <div class="report-preview-box" id="report-preview-content"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>
