@@ -1,6 +1,7 @@
 /**
- * PayMatch AI — Production Frontend Application Logic (Interactive & Bulletproof)
+ * PayMatch AI — Production Frontend Application Logic (Interactive & Resilient)
  * Track 4: AI Finance Controller - Razorpay Internship Hackathon
+ * Supports GitHub Pages sub-path (/paymatch-ai/) and Root deployment
  */
 
 // Embedded Realistic Indian Demo Transactions Dataset (45 Txns)
@@ -399,14 +400,22 @@ function generateExecutiveReport(metrics, transactions) {
   return md;
 }
 
-// Switch Active Tab Helper
-function switchTab(tabId) {
+// Switch Active Tab Helper with Hash Synchronization
+function switchTab(tabId, updateHash = true) {
   document.querySelectorAll(".tab-btn").forEach(b => {
     b.classList.toggle("active", b.getAttribute("data-tab") === tabId);
   });
   document.querySelectorAll(".tab-pane").forEach(p => {
     p.classList.toggle("active", p.id === tabId);
   });
+
+  if (updateHash) {
+    const hash = tabId.replace("tab-", "");
+    if (window.location.hash.replace("#", "") !== hash) {
+      history.replaceState(null, null, `#${hash}`);
+    }
+  }
+
   if (tabId === "tab-dashboard" || tabId === "tab-insights") {
     setTimeout(renderCharts, 50);
   }
@@ -911,7 +920,7 @@ function handleChatQuery(query) {
   userMsg.innerHTML = `<div class="chat-avatar"><i class="fa-solid fa-user"></i></div><div class="chat-bubble">${query}</div>`;
   container.appendChild(userMsg);
 
-  // Assistant Response Logic (Offline Fallback Guarantee)
+  // Assistant Response Logic (Deterministic & Offline Fallback Guarantee)
   const q = query.toLowerCase();
   let answer = "";
 
@@ -950,11 +959,32 @@ function initApp() {
   currentHealth = result.health;
   updateUI();
 
+  // Handle Initial Hash Navigation (e.g. #transactions, #assistant, #insights, #export)
+  const initialHash = window.location.hash.replace("#", "").toLowerCase();
+  const validTabs = {
+    "dashboard": "tab-dashboard",
+    "transactions": "tab-transactions",
+    "assistant": "tab-assistant",
+    "insights": "tab-insights",
+    "export": "tab-export"
+  };
+  if (validTabs[initialHash]) {
+    switchTab(validTabs[initialHash], false);
+  }
+
+  // Listen to hash changes
+  window.addEventListener("hashchange", () => {
+    const currentHash = window.location.hash.replace("#", "").toLowerCase();
+    if (validTabs[currentHash]) {
+      switchTab(validTabs[currentHash], false);
+    }
+  });
+
   // Tab Navigation Buttons
   document.querySelectorAll(".tab-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       const targetId = btn.getAttribute("data-tab");
-      switchTab(targetId);
+      switchTab(targetId, true);
     });
   });
 
@@ -963,7 +993,7 @@ function initApp() {
     card.addEventListener("click", () => {
       const filterVal = card.getAttribute("data-filter") || "ALL";
       document.getElementById("filter-status-select").value = filterVal;
-      switchTab("tab-transactions");
+      switchTab("tab-transactions", true);
       renderTable();
       showToast(`Filtered transactions by: ${filterVal}`);
     });
@@ -1134,6 +1164,16 @@ function initApp() {
   document.getElementById("btn-copy-md").addEventListener("click", () => {
     const mdContent = generateExecutiveReport(currentMetrics, currentDataset);
     copyTextToClipboard(mdContent, "Executive Summary copied to clipboard!");
+  });
+
+  // Load Persisted Gemini Key if present
+  const savedKey = localStorage.getItem("paymatch_gemini_key");
+  if (savedKey) {
+    document.getElementById("gemini-api-key").value = savedKey;
+  }
+  document.getElementById("gemini-api-key").addEventListener("change", (e) => {
+    localStorage.setItem("paymatch_gemini_key", e.target.value.trim());
+    showToast("AI Key preference saved");
   });
 }
 
